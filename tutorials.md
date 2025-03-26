@@ -37,6 +37,7 @@ notebooks/tutorials/Histone_methyltransferase_simulation_with_a_multisite_water_
 notebooks/tutorials/Histone_methyltransferase_simulation_with_multisite_Zn2_structural_ions.ipynb
 notebooks/tutorials/Running_a_REST_simulation.ipynb
 notebooks/tutorials/umbrella_sampling.ipynb
+notebooks/tutorials/Using_tabulated_potentials.ipynb
 :::
 
 ----
