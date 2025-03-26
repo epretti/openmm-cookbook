@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath("./sphinx"))
 # -- Project information -----------------------------------------------------
 
 project = "OpenMM Cookbook & Tutorials"
-copyright = "2023, The OpenMM Contributors"
+copyright = "2025, The OpenMM Contributors"
 author = "The OpenMM Contributors"
 release = os.getenv("PAGES_DEPLOY_PATH","dev")
 print(release)
@@ -34,7 +34,6 @@ extensions = [
     "nbsphinx",
     "cookbook",
     "myst_parser",
-    "sphinx_gallery.load_style",
 ]
 
 myst_enable_extensions = [
@@ -73,6 +72,10 @@ nbsphinx_prolog = """
     </div>
 
 """
+
+nbsphinx_thumbnails = {
+    "**": "_static/thumbnail.png"
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["sphinx/_templates"]
