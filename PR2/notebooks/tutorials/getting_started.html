@@ -19,7 +19,7 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Protein in Water" href="protein_in_water.html" />
+    <link rel="next" title="Loading Input Files and Reporting Results" href="loading_and_reporting.html" />
     <link rel="prev" title="The OpenMM Tutorials" href="../../tutorials.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -47,8 +47,8 @@
 <section id="Introduction">
 <h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">¶</a></h2>
 <p>OpenMM is a high-performance toolkit for molecular dynamics simulations. This series of tutorials is designed to walk you through the basic steps of using OpenMM to set up and run simulations. Once you have familiarized yourself with these basics, you can consult the <a class="reference internal" href="../../tutorials.html#beyond-the-basics"><span class="std std-ref">list of more advanced tutorials</span></a> to learn how to accomplish more specific simulation tasks.</p>
-<p>Before beginning, it is useful to understand a bit about the architecture of OpenMM. The core OpenMM library is written in C++, and the <a class="reference external" href="https://docs.openmm.org/latest/api-c++/">OpenMM C++ API</a> can be used directly to invoke OpenMM from C++ programs. However, OpenMM provides wrappers for other languages as well, such as the <a class="reference external" href="https://docs.openmm.org/latest/api-python/">OpenMM Python API</a>. These tutorials demonstrate how to use OpenMM from its Python API, not only due to the convenience of
-working with OpenMM from within Python, but also due to additional OpenMM features that are only available from Python. In particular, the Python API consists of both:</p>
+<p>Before beginning, it is useful to understand a bit about the architecture of OpenMM. The core OpenMM library is written in C++, and the <a class="reference external" href="https://docs.openmm.org/latest/api-c++/">OpenMM C++ API</a> can be used directly to invoke OpenMM from C++ programs. However, OpenMM provides wrappers for other languages as well, such as the <a class="reference external" href="https://docs.openmm.org/latest/api-python/">OpenMM Python API</a>. These tutorials demonstrate how to use OpenMM from its Python API, not only for the convenience of
+working with OpenMM <em>via</em> Python, but also because some features are only available from Python. In particular, the Python API consists of both:</p>
 <ul class="simple">
 <li><p>A lower-level <a class="reference external" href="https://docs.openmm.org/latest/api-python/library.html">“library layer”</a> that directly wraps OpenMM’s C++ interface and provides tools for building customized molecular simulation scripts, libraries, and applications from scratch, and</p></li>
 <li><p>A higher-level <a class="reference external" href="https://docs.openmm.org/latest/api-python/app.html">“application layer”</a> that provides various tools for loading and applying commonly used molecular force fields, reading and writing common trajectory and topology file formats, and reporting properties during simulation runs.</p></li>
@@ -59,10 +59,10 @@ working with OpenMM from within Python, but also due to additional OpenMM featur
 <li><p>Use some external programs or tools (<em>e.g.</em>, LEaP from <a class="reference external" href="https://ambermd.org/AmberTools.php">AmberTools</a>, or <a class="reference external" href="https://www.charmm-gui.org/">CHARMM-GUI</a>, to do your modeling and parameterization, and load the resulting input files into OpenMM for simulation. This method can be convenient if your desired modeling workflow is more complex than what OpenMM currently supports, or you wish to use a force field that hasn’t been ported to OpenMM’s native format. It also uses OpenMM’s application
 layer.</p></li>
 <li><p>Use OpenMM’s library layer to build a molecular system from scratch. This is the most general and flexible way to use OpenMM, but requires you to explicitly define all of the necessary potential energy terms and parameters for the atoms, bonds, angles, torsions, <em>etc.</em> in your simulation, unlike the other methods that handle this setup automatically given a topology and a predefined force field. This approach can be useful to build more complex systems when complete control over system setup
-is required. However, it is also especially helpful for setting up simulations of simple model systems like Lennard-Jones fluid mixtures, bead-spring polymers, and simple coarse-grained models.</p></li>
+is required. However, it is also especially helpful for setting up simulations of simple model systems like Lennard-Jones fluid mixtures, bead-spring polymers, or simple coarse-grained models.</p></li>
 </ol>
 <p>These approaches are not completely exclusive: for instance, it is possible to use OpenMM’s application layer to set up a simulation, and then use the library layer to make manual modifications before running it. However, understanding the basics of these methods is useful for understanding how to build more complex simulation workflows with OpenMM, so these introductory tutorials will walk through each of them in turn. This first tutorial covers the first method. In particular, we will see how
-to load a protein structure into OpenMM, clean up and prepare the structure for simulation, add solvent, specify a force field, and run a simulation.</p>
+to load a protein structure into OpenMM, clean up and prepare the structure for simulation, specify a force field, and run a simulation.</p>
 <p>The tutorials will not describe in extensive detail the use of external programs, such as Amber and CHARMM, for system setup. When they discuss how to use OpenMM to run simulations that have been set up using other tools, links to relevant documentation for these tools will be given. Furthermore, they will not describe in detail the basic theory behind molecular simulations, or discuss how to perform more advanced analysis of simulation results beyond extracting basic thermodynamic properties.
 For links to resources on related topics not covered directly in these tutorials, refer to the <a class="reference internal" href="#Further-Reading"><span class="std std-ref">Further Reading</span></a> section of this and other tutorial notebooks.</p>
 </section>
@@ -73,8 +73,8 @@ For links to resources on related topics not covered directly in these tutorials
 </pre></div>
 </div>
 <p>is all you need to get started, but more detailed instructions and a more comprehensive list of installation options can be found <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/01_getting_started.html#installing-openmm">in the OpenMM user manual</a>. (If you are following along with this notebook in Google Colab, then a cell has been inserted at the top of the notebook with commands to automatically install OpenMM into the Colab environment.)</p>
-<p>Unlike some other molecular dynamics packages (<em>e.g.</em>, LAMMPS), an installation of OpenMM does not include a standalone executable that reads input files with parameters and commands, runs simulations, and writes results. Instead, OpenMM simply includes a Python package <code class="docutils literal notranslate"><span class="pre">openmm</span></code> providing access to its API. This allows you to write “input scripts” for OpenMM in Python by importing its package and using the classes and functions it provides. In addition to having the full power and flexibility
-of Python available when invoking OpenMM, this approach also enables the use of OpenMM as a library inside other Python packages.</p>
+<p>Unlike some other molecular dynamics packages (<em>e.g.</em>, LAMMPS), an installation of OpenMM does not include a standalone executable that reads input files with parameters and commands, runs simulations, and writes results. Instead, OpenMM simply includes a Python package <code class="docutils literal notranslate"><span class="pre">openmm</span></code> providing access to its API. This allows you to write “input scripts” for OpenMM in Python by importing its package and using the classes and functions it provides, while also enabling the use of OpenMM as a library
+inside more complex Python packages and programs.</p>
 <p>For this tutorial, where we load a protein structure and set up a straightforward molecular dynamics simulation, we will only need to write a simple script. OpenMM provides a helpful utility, called <a class="reference external" href="https://github.com/openmm/openmm-setup">OpenMM Setup</a>, to automate writing the necessary Python scripts for simulation tasks like this. It can be installed as an additional conda-forge package:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>openmm-setup
 </pre></div>
@@ -84,23 +84,22 @@ of Python available when invoking OpenMM, this approach also enables the use of 
 </pre></div>
 </div>
 <p>in a shell, which opens its graphical user interface in a web browser.</p>
-<p><img alt="6ddf09fa9e7b46de9eff1cba663e987f" class="no-scaled-link" src="../../_images/getting_started_1.png" style="width: 800px;" /></p>
+<p><img alt="dfab3ceed7864632b3d19cc99ae7a65b" class="no-scaled-link" src="../../_images/getting_started_1.png" style="width: 800px;" /></p>
 <p>In this example, we will use a structure of hen egg white lysozyme from the Protein Data Bank with <a class="reference external" href="https://www.rcsb.org/structure/1AKI">PDB ID 1AKI</a>. The structure can be downloaded in PDBx/mmCIF format as <a class="reference external" href="https://files.rcsb.org/download/1AKI.cif">1AKI.cif</a> from the linked PDB entry. If you want to follow along in OpenMM Setup, you can select the default option to load a PDB or PDBx/mmCIF file.</p>
-<p><img alt="7cb3d52556294ce38f2d541b392ae623" class="no-scaled-link" src="../../_images/getting_started_2.png" style="width: 800px;" /></p>
-<p>To actually perform any kind of simulation from a molecular structure, we need to specify a <em>force field</em> that defines parameters for bonded and non-bonded interactions between its atoms, and allows OpenMM to compute energies and forces from atomic positions. OpenMM provides several commonly used force fields for biomolecular simulations; these are <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#force-fields">described in the user guide</a>. Choosing an appropriate
-force field for your research problem is outside of the scope of this tutorial, but you should be aware of the behavior of the force field you choose and any limitations it has that might be applicable to your system. The default force field that we will use here, which OpenMM refers to as <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#amber19">“Amber19”</a>, includes Amber <a class="reference external" href="https://ambermd.org/AmberModels_proteins.php">ff19SB</a> force field parameters for proteins,
-among others. For this tutorial, we will use the default TIP3P-FB model for water; the water models distributed with the force fields built into OpenMM also contain compatible parameters for ions.</p>
+<p><img alt="849718346b6b4e189dacebfcc307a186" class="no-scaled-link" src="../../_images/getting_started_2.png" style="width: 800px;" /></p>
+<p>To actually perform any kind of simulation from a molecular structure, we need to specify a <em>force field</em> that defines parameters for bonded and non-bonded interactions between its atoms, thereby allowing OpenMM to compute energies and forces from atomic positions. OpenMM provides several commonly used force fields for biomolecular simulations; these are <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#force-fields">described in the user guide</a>. Choosing an
+appropriate force field for your research problem is outside of the scope of this tutorial, but you should be aware of the behavior of the force field you choose and any limitations it has that might be applicable to your system. The default force field that we will use here, which OpenMM refers to as <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#amber19">“Amber19”</a>, includes Amber <a class="reference external" href="https://ambermd.org/AmberModels_proteins.php">ff19SB</a> force field parameters
+for proteins, among others. For this tutorial, we will use the default TIP3P-FB model for water; the water models distributed with the force fields built into OpenMM also contain compatible parameters for ions.</p>
 <p>Protein structures downloaded directly from the Protein Data Bank are often not immediately suitable for running simulations. They may be missing hydrogen atoms, and they may contain additional, <em>e.g.</em>, oxygen atoms at positions where water molecules are found in the crystal structures. OpenMM Setup comes with a builtin interface to the <a class="reference external" href="https://github.com/openmm/pdbfixer">PDBFixer</a> tool that can help clean up and prepare files for simulation. Selecting the option to do this leads to a
 visualization window where we can inspect the structure and choose actions to take:</p>
-<p><img alt="e4e73efb0eb44ad88d0bf41b66553bab" class="no-scaled-link" src="../../_images/getting_started_3.png" style="width: 800px;" /></p>
+<p><img alt="a08981ef82164f049f15eaa0b78e0a0d" class="no-scaled-link" src="../../_images/getting_started_3.png" style="width: 800px;" /></p>
 <p>A PDB or PDBx/mmCIF file contains a hierarchical representation of a molecular structure, with atoms grouped into residues and residues grouped into chains. Chains can correspond to single polymeric molecules consisting of a sequence of residues, but more generally, a chain may just group related residues together. For the file we are using in this tutorial, the protein is present in chain A and all of the crystallographic water molecules are in chain B, so we can exclude the latter to remove
 the water molecules. Alternatively, you can use the “delete heterogens” dropdown to remove water as well as other non-standard species from the structure.</p>
 <p>After removing the water present in the crystal structure, we can instruct OpenMM Setup to add hydrogen atoms to the remaining protein, and add water back (along with <span class="math notranslate nohighlight">\(\ce{Na+}\)</span> and <span class="math notranslate nohighlight">\(\ce{Cl-}\)</span> ions) in the form of a solvent box surrounding it. Here we have kept the default options except for increasing the ionic strength to 0.1 M:</p>
-<p><img alt="1b061527d51a4ae58a0439f9d7338555" class="no-scaled-link" src="../../_images/getting_started_4.png" style="width: 800px;" /></p>
+<p><img alt="2d317fe4086745299d4c054a3c951dca" class="no-scaled-link" src="../../_images/getting_started_4.png" style="width: 800px;" /></p>
 <p>At last, OpenMM Setup will generate a Python script along with a PDBx/mmCIF file containing our preprocessed and solvated protein structure. You can use OpenMM Setup to run OpenMM and monitor the simulation output directly from your web browser, but in this tutorial, we will take the script that OpenMM Setup generates and work through it line by line. For this tutorial, we will keep the default options from OpenMM Setup, except for:</p>
 <ul class="simple">
-<li><p>Decreasing the value of the “Simulation Length (steps)” field in the Simulation tab to 10000 (for convenience running the simulation within a Jupyter notebook).</p></li>
-<li><p>Changing the “Platform” option in the Simulation tab to “CPU”. If you are running OpenMM on a computer with a GPU that supports CUDA or OpenCL, you can select the appropriate option to instruct OpenMM to use your GPU for increased performance.</p></li>
+<li><p>Decreasing the value of the “Simulation Length (steps)” field in the Simulation tab to 20000 (to keep the simulation short for the tutorial).</p></li>
 <li><p>Deselecting the “Save trajectory to a file” and “Save checkpoints to a file” options in the Output tab. The next tutorial will cover simulation output from OpenMM in more detail; in this tutorial, we will just instruct OpenMM to write some basic statistics to a text file.</p></li>
 <li><p>Decreasing the value of the “Data Output Interval (steps)” field in the Output tab to 100. Since we have selected a shorter simulation length, we can save simulation properties more frequently for convenience.</p></li>
 <li><p>Selecting “Density” under “Data to Write” in the Output tab. Since the default is to run a simulation at constant pressure, this will allow us to monitor changes in the volume of the system.</p></li>
@@ -137,9 +136,8 @@ the water molecules. Alternatively, you can use the “delete heterogens” drop
 
 <span class="c1"># Simulation Options</span>
 
-<span class="n">steps</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="mi">20000</span>
 <span class="n">equilibrationSteps</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">getPlatformByName</span><span class="p">(</span><span class="s1">&#39;CPU&#39;</span><span class="p">)</span>
 <span class="n">dataReporter</span> <span class="o">=</span> <span class="n">StateDataReporter</span><span class="p">(</span><span class="s1">&#39;log.txt&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">totalSteps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
     <span class="n">step</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">speed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">potentialEnergy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
 
@@ -153,7 +151,7 @@ the water molecules. Alternatively, you can use the “delete heterogens” drop
 <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">MonteCarloBarostat</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">barostatInterval</span><span class="p">))</span>
 <span class="n">integrator</span> <span class="o">=</span> <span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">friction</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
 <span class="n">integrator</span><span class="o">.</span><span class="n">setConstraintTolerance</span><span class="p">(</span><span class="n">constraintTolerance</span><span class="p">)</span>
-<span class="n">simulation</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">platform</span><span class="p">)</span>
+<span class="n">simulation</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">)</span>
 <span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
 
 <span class="c1"># Minimize and Equilibrate</span>
@@ -173,8 +171,8 @@ the water molecules. Alternatively, you can use the “delete heterogens” drop
 </pre></div>
 </div>
 </section>
-<section id="Running-the-Simulation">
-<h2>Running the Simulation<a class="headerlink" href="#Running-the-Simulation" title="Link to this heading">¶</a></h2>
+<section id="Running-a-Simulation">
+<h2>Running a Simulation<a class="headerlink" href="#Running-a-Simulation" title="Link to this heading">¶</a></h2>
 <p>We will now examine the Python script generated by OpenMM Setup in detail. First, we import OpenMM:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -216,8 +214,11 @@ the water molecules. Alternatively, you can use the “delete heterogens” drop
 </pre></div>
 </div>
 </div>
-<p>We do not need to place these files in the current working directory to load them. OpenMM tries to look up the force field files using the paths provided first, and if they cannot be found, looks in its data directories for them. Since we are using force fields that are <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#force-fields">distributed with OpenMM</a>, they are loaded from the data directory that can be found at <code class="docutils literal notranslate"><span class="pre">openmm/app/data</span></code> wherever the OpenMM Python API
-has been installed.</p>
+<p>We do not need to find and place these files in the current working directory to load them. OpenMM tries to look up the force field files using the paths provided first, and if they cannot be found, looks in its data directories for them. Since we are using force fields that are <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#force-fields">distributed with OpenMM</a>, they are loaded from the data directory that can be found at <code class="docutils literal notranslate"><span class="pre">openmm/app/data</span></code> wherever the OpenMM
+Python API has been installed.</p>
+</section>
+<section id="Simulation-Parameters">
+<h3>Simulation Parameters<a class="headerlink" href="#Simulation-Parameters" title="Link to this heading">¶</a></h3>
 <p>The script generated by OpenMM Setup now defines several constants specifying simulation parameters. We will discuss each of these in more detail as they are used. OpenMM Setup allows you to adjust all of their values, although the defaults it generates should usually be appropriate for biomolecular simulations.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -243,26 +244,16 @@ has been installed.</p>
 
 <span class="c1"># Simulation Options</span>
 
-<span class="n">steps</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="mi">20000</span>
 <span class="n">equilibrationSteps</span> <span class="o">=</span> <span class="mi">1000</span>
 </pre></div>
 </div>
 </div>
 <p>You may notice that some of these parameters are quantities with units. OpenMM’s Python API supports automatic unit conversions and dimension checking through the <a class="reference external" href="https://docs.openmm.org/latest/api-python/app.html#units">openmm.unit</a> package. If raw values without units are provided to OpenMM, it will assume that they are appropriately dimensioned quantities in OpenMM’s <a class="reference external" href="https://docs.openmm.org/latest/userguide/theory/01_introduction.html#units">default unit system</a>. However, always using
 the units API can help prevent unit conversion mistakes. More information can be found <a class="reference external" href="https://docs.openmm.org/latest/userguide/library/05_languages_not_cpp.html#units-and-dimensional-analysis">in the user guide</a>.</p>
-<p>Next, OpenMM Setup explicitly selects the OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.Platform.html">Platform</a> to use. This controls (among other things) whether calculations are done on the CPU or the GPU. Platform selection is discussed <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#platforms">in the user guide</a>, as well as the <a class="reference external" href="https://docs.openmm.org/latest/userguide/library/01_introduction.html#platforms">differences between
-platforms</a> provided by OpenMM. Depending on the hardware and drivers installed, not every platform may be usable. If you do not choose a platform manually, OpenMM will attempt to select the fastest one available.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">getPlatformByName</span><span class="p">(</span><span class="s1">&#39;CPU&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
 <p>Now we can create a <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.statedatareporter.StateDataReporter.html">StateDataReporter</a> that will print some basic information about the state of our simulation to a file as it runs. As already mentioned, we will explore options for output in more detail in the next tutorial.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dataReporter</span> <span class="o">=</span> <span class="n">StateDataReporter</span><span class="p">(</span><span class="s1">&#39;log.txt&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">totalSteps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
@@ -270,9 +261,12 @@ platforms</a> provided by OpenMM. Depending on the hardware and drivers installe
 </pre></div>
 </div>
 </div>
+</section>
+<section id="Preparing-the-Simulation">
+<h3>Preparing the Simulation<a class="headerlink" href="#Preparing-the-Simulation" title="Link to this heading">¶</a></h3>
 <p>The PDBxFile object produced by loading the file above has a <code class="docutils literal notranslate"><span class="pre">topology</span></code> attribute containing an OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.topology.Topology.html">Topology</a> object, and a <code class="docutils literal notranslate"><span class="pre">positions</span></code> attribute, holding the actual coordinates contained in the file.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">topology</span> <span class="o">=</span> <span class="n">pdbx</span><span class="o">.</span><span class="n">topology</span>
@@ -282,10 +276,10 @@ platforms</a> provided by OpenMM. Depending on the hardware and drivers installe
 </div>
 <p>Topology objects contain information about the identity and connectivity of the particles in a molecular system. They arrange this information hierarchically, with each Topology containing a list of chains, each chain a list of residues, and each residue a list of atoms. For biopolymers such as proteins, OpenMM’s concepts of chains and residues generally map onto their standard meanings in this context. In a later tutorial, we will look at this structure in more detail and see how to build a
 Topology manually.</p>
-<p>For now, we will use the Topology as is with the with the <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.forcefield.ForceField.html#openmm.app.forcefield.ForceField.createSystem">ForceField.createSystem()</a> method to create an OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.System.html">System</a>. In contrast to a ForceField, which defines interaction parameters for atoms in <em>residue templates</em>, a System object contains information about all of the
+<p>For now, we will use the Topology as is with the <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.forcefield.ForceField.html#openmm.app.forcefield.ForceField.createSystem">ForceField.createSystem()</a> method to create an OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.System.html">System</a>. In contrast to a ForceField, which defines interaction parameters for atoms in <em>residue templates</em>, a System object contains information about all of the
 interactions that OpenMM needs to calculate energies and forces for our actual molecular system of interest. OpenMM looks at the residues in the Topology, matches them to templates in the ForceField, and assigns parameters to create the final System.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">system</span> <span class="o">=</span> <span class="n">forcefield</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">nonbondedMethod</span><span class="p">,</span> <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">nonbondedCutoff</span><span class="p">,</span>
@@ -300,11 +294,11 @@ interactions that OpenMM needs to calculate energies and forces for our actual m
 <li><p><code class="docutils literal notranslate"><span class="pre">constraints</span></code>: Controls which interparticle distances in a simulation OpenMM will apply rigid constraints to. The <code class="docutils literal notranslate"><span class="pre">HBonds</span></code> option selects all bonds to hydrogen atoms, which typically have large force constants and thus generate high-frequency motion. Constraining them to fixed distances allows the simulation to use a larger timestep while still remaining stable.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">rigidWater</span></code>: Controls application of rigid constraints specifically to water molecules in the simulation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ewaldErrorTolerance</span></code>: Controls the relative error in computing forces due to electrostatics with the Ewald method. The value of 0.0005 selected by OpenMM Setup is the default used by OpenMM if none is specified.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">hydrogenMass</span></code>: Controls the mass of hydrogen atoms used for <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#heavy-hydrogens">hydrogen mass repartitioning</a>, which may permit a further increase in the simulation timestep.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hydrogenMass</span></code>: Controls the mass of hydrogen atoms used for <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#heavy-hydrogens">hydrogen mass repartitioning</a>, which can permit a further increase in the simulation timestep.</p></li>
 </ul>
 <p>For simulations in the NPT ensemble, we need to control both the pressure and the temperature. For pressure control, OpenMM offers the <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.MonteCarloBarostat.html">MonteCarloBarostat</a>, which attempts to uniformly scale the size of the simulation’s periodic box vectors every <code class="docutils literal notranslate"><span class="pre">barostatInterval</span></code> steps. (Other, anisotropic barostats are also available.)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">MonteCarloBarostat</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">barostatInterval</span><span class="p">));</span>
@@ -315,7 +309,7 @@ interactions that OpenMM needs to calculate energies and forces for our actual m
 <p>To perform molecular dynamics simulations, we need to select an integration algorithm. In OpenMM, we do so by creating an <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.Integrator.html">Integrator</a> object. Subclasses of Integrator define specific integration algorithms. Here, we will use the <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.LangevinMiddleIntegrator.html">LangevinMiddleIntegrator</a>, which uses Langevin dynamics to integrate positions and
 velocities over time and maintain temperature at a fixed setpoint:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">integrator</span> <span class="o">=</span> <span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">friction</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
@@ -326,18 +320,18 @@ velocities over time and maintain temperature at a fixed setpoint:</p>
 <p>We also set the <code class="docutils literal notranslate"><span class="pre">friction</span></code> coefficient for the integrator, and specify the simulation timestep <code class="docutils literal notranslate"><span class="pre">dt</span></code>. The <code class="docutils literal notranslate"><span class="pre">constraintTolerance</span></code> controls the error in satisfying any rigid distance constraints in the System. Choosing appropriate integration parameters is beyond the scope of this tutorial, but the values selected by OpenMM Setup should be reasonable for biomolecular simulations.</p>
 <p>We now have all of the pieces in place needed to run a simulation, and can create an OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.simulation.Simulation.html">Simulation</a> object that will manage the simulation for us:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">platform</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>The simulation holds a <code class="docutils literal notranslate"><span class="pre">context</span></code> attribute containing an OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.Context.html">Context</a>. Unlike a System, that just defines information about particles and the interactions between them, a Context stores all of the information about the state of a simulation, including particle positions and velocities. A System object acts somewhat like a template for creating Context objects, and one System could be used to create more than
-one Context if desired. The interaction parameters, and other properties, stored in a Context are dependent on the parameters set in the System when the Context was created. If changes are made to a System after a Context has been created from it, the Context will not automatically reflect these changes (although in certain cases, it is possible to update a Context with new parameters from a System).</p>
+<p>The simulation holds a <code class="docutils literal notranslate"><span class="pre">context</span></code> attribute containing an OpenMM <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.Context.html">Context</a>. Unlike a System, which just defines information about particles and the interactions between them, a Context stores all of the information about the state of a simulation, including particle positions and velocities. A System object acts somewhat like a template for creating Context objects, and one System could be used to create more
+than one Context if desired. The interaction parameters, and other properties, stored in a Context are dependent on the parameters set in the System when the Context was created. If changes are made to a System after a Context has been created from it, the Context will not automatically reflect these changes (although in certain cases, it is possible to update a Context with new parameters from a System).</p>
 <p>You may have noticed that we only used the <code class="docutils literal notranslate"><span class="pre">topology</span></code> from our PDBxFile, and not its <code class="docutils literal notranslate"><span class="pre">positions</span></code>, when creating the System. Now that we have a Context, we can initialize it with the positions from the PDBxFile.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
@@ -347,7 +341,7 @@ one Context if desired. The interaction parameters, and other properties, stored
 <p>Although there should not be severe problems like overlapping particles in our initial positions, it is a good idea to run a local energy minimization before starting a simulation. The distances between protein atoms from the PDB structure might differ from their equilibrium values defined by the force field, and the solvent molecules added by OpenMM Setup might not have optimal orientations. Minimizing the energy can prevent large initial forces that could otherwise destabilize a simulation.
 OpenMM makes this easy to do:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">minimizeEnergy</span><span class="p">()</span>
@@ -356,44 +350,36 @@ OpenMM makes this easy to do:</p>
 </div>
 <p>With good initial positions determined, we can now set initial velocities by having OpenMM draw from the appropriate random distribution:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setVelocitiesToTemperature</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>At last, we can run some simulation steps.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</section>
+<section id="Running-Steps">
+<h3>Running Steps<a class="headerlink" href="#Running-Steps" title="Link to this heading">¶</a></h3>
+<p>At last, we can run some simulation steps. OpenMM Setup generates code to run the simulation for an equilibration period first, then start recording data, then reset the step counter to zero (so that it appears correctly in the log file) before finally running for the desired number of steps:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">equilibrationSteps</span><span class="p">)</span>
+<span class="n">simulation</span><span class="o">.</span><span class="n">reporters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dataReporter</span><span class="p">)</span>
+<span class="n">simulation</span><span class="o">.</span><span class="n">currentStep</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">equilibrationSteps</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<p>If you are interested in the equilibrium properties of a system, it is a good idea to run the simulation for an equilibration period, as we have just done, before collecting data. For an actual production simulation, you will generally need to run for much longer than the 4 picoseconds we have integrated over here. In any case, to monitor its progress, we can attach the StateDataReporter we previously created to the Simulation:</p>
+<p>For this tutorial, we will skip the equilibration step so that we can monitor the approach of the simulation to equilibrium from its initial conditions. Once we attach the StateDataReporter we previously created to the Simulation, any steps we run will result in periodic output to a file <code class="docutils literal notranslate"><span class="pre">log.txt</span></code>.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">reporters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dataReporter</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<p>Resetting the step counter and running more steps will now result in periodic output to a file <code class="docutils literal notranslate"><span class="pre">log.txt</span></code>:</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span><span class="o">.</span><span class="n">currentStep</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>We have now reached the end of the script generated by OpenMM Setup, but it is worth inspecting the output generated. The format of the data file written by the StateDataReporter is very simple:</p>
+<p>The format of the data file written by the StateDataReporter is very simple:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>head<span class="w"> </span>log.txt
@@ -406,29 +392,29 @@ OpenMM makes this easy to do:</p>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 #&#34;Progress (%)&#34; &#34;Step&#34;  &#34;Potential Energy (kJ/mole)&#34;    &#34;Temperature (K)&#34;       &#34;Density (g/mL)&#34;        &#34;Speed (ns/day)&#34;
-1.0%    100     -371330.1966912335      299.79983237084616      1.0107550250849229      0
-2.0%    200     -371816.6791075376      298.86969658176 1.0107550250849229      45.1
-3.0%    300     -371508.7427855137      298.19615393579187      1.0110661134067789      45.3
-4.0%    400     -370845.8120807589      299.84168177897584      1.0110661134067789      45.4
-5.0%    500     -371752.9498071989      301.89136978914127      1.0110661134067789      45.5
-6.0%    600     -371766.33107855363     301.4911447371925       1.0110661134067789      45.4
-7.0%    700     -371952.9532765628      300.696251828382        1.0110661134067789      45.3
-8.0%    800     -371527.86319420865     300.4529260043609       1.012156943617508       45.3
-9.0%    900     -371960.36675047834     304.8492212120566       1.015351187698743       45.3
+0.5%    100     -392462.6368432469      202.41050428129032      0.9859193452846482      0
+1.0%    200     -386278.02286094567     232.04498589064949      0.9875140629022262      418
+1.5%    300     -381742.878788444       254.54980861708538      0.988528668861509       450
+2.0%    400     -378766.69167399127     271.14206329882074      0.9921266975468912      461
+2.5%    500     -375375.20729899127     281.0102679988956       0.9921266975468912      468
+3.0%    600     -374339.1186906365      289.80232805861664      0.9941722112845691      470
+3.5%    700     -372789.6300845407      293.59554235479175      0.9989834998441671      473
+4.0%    800     -372372.03231144836     297.0320126200911       0.9989660870350875      473
+4.5%    900     -371645.90473443875     297.40984676966184      1.0010599609976667      475
 </pre></div></div>
 </div>
 <p>We can plot the results to qualitatively assess how these parameters change with time:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="n">step</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">temp</span><span class="p">,</span> <span class="n">rho</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;log.txt&quot;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+<span class="n">step</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">temp</span><span class="p">,</span> <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;log.txt&quot;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
 <span class="n">time</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">dt</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">picosecond</span><span class="p">)</span>
 
-<span class="n">figure</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
+<span class="n">figure</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
 
 <span class="n">axes_pe</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">axes_pe</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">pe</span><span class="p">)</span>
@@ -445,7 +431,7 @@ OpenMM makes this easy to do:</p>
 <span class="n">axes_rho</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (ps)&quot;</span><span class="p">)</span>
 <span class="n">axes_rho</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Density (g/mL)&quot;</span><span class="p">)</span>
 
-<span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -453,10 +439,10 @@ OpenMM makes this easy to do:</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/notebooks_tutorials_getting_started_44_0.png" src="../../_images/notebooks_tutorials_getting_started_44_0.png" />
+<img alt="../../_images/notebooks_tutorials_getting_started_40_0.png" src="../../_images/notebooks_tutorials_getting_started_40_0.png" />
 </div>
 </div>
-<p>The fluctuations in the potential energy and temperature here appear largely random, while the density is still increasing at the start of the run, suggesting an insufficient equilibration time. Of course, in a production run, longer simulations would be used, along with more advanced analysis to understand whether or not the structure of the protein is changing over time. The simulation is intentionally kept short for this tutorial, and more complex analysis is out of its scope.</p>
+<p>The potential energy and temperature approach their equilibrium values quickly, while the density takes slightly longer to stabilize. For a production simulation, more quantitative analysis could be done to understand whether or not the structure of the protein is changing over a longer period of time. The simulation is intentionally kept short for this tutorial, and structural analysis of simulation results is out of its scope.</p>
 </section>
 </section>
 <section id="Summary">
@@ -467,8 +453,8 @@ OpenMM makes this easy to do:</p>
 <li><p>Load a PDBx/mmCIF file into OpenMM, set up a simulation at constant temperature and pressure, and run an energy minimization.</p></li>
 <li><p>Run molecular dynamics steps and set up OpenMM to write basic thermodynamic properties to an output file.</p></li>
 </ul>
-<p>We used OpenMM Setup to prepare our input structure as well as generate an input script. If you want to do this programmatically from within Python, rather than through the OpenMM Setup graphical user interface, you may be able to use OpenMM’s <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.modeller.Modeller.html">Modeller</a> class: see the <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/03_model_building_editing.html">user guide</a> for examples. The
-<a class="reference external" href="https://github.com/openmm/pdbfixer">PDBFixer</a> tool, used internally by OpenMM Setup, offers options for fixing common problems in structures from the Protein Data Bank.</p>
+<p>We used OpenMM Setup to prepare our input structure as well as generate an input script. If you want to do this programmatically from within Python, rather than through the OpenMM Setup graphical user interface, you may be able to use OpenMM’s <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.modeller.Modeller.html">Modeller</a> class: see the <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/03_model_building_editing.html">user guide</a> for examples. In addition, the
+<a class="reference external" href="https://github.com/openmm/pdbfixer">PDBFixer</a> tool, used internally by OpenMM Setup, offers various options for fixing common problems in structures from the Protein Data Bank.</p>
 <p>In the next tutorial, we will discuss various ways of getting data in and out of OpenMM. We will cover how to read input files in formats designed for other molecular dynamics engines like Amber, and how to get various kinds of data, including simulation trajectories, out of OpenMM while running a simulation.</p>
 </section>
 <section id="Further-Reading">
@@ -476,8 +462,14 @@ OpenMM makes this easy to do:</p>
 <ul class="simple">
 <li><p>Relevant sections of the <a class="reference external" href="https://docs.openmm.org/latest/api-python/">User Guide</a>:</p>
 <ul>
-<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html">Chapter 3: Running Simulations</a></p></li>
-<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/library/05_languages_not_cpp.html#python-api">Section 12.3: Python API</a></p></li>
+<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html">Running Simulations</a></p>
+<ul>
+<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#a-first-example">A First Example</a></p></li>
+<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#the-openmm-setup-application">The OpenMM-Setup Application</a></p></li>
+<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#simulation-parameters">Simulation Parameters</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://docs.openmm.org/latest/userguide/library/05_languages_not_cpp.html#python-api">Python API</a></p></li>
 </ul>
 </li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/">Python API documentation</a> pages for classes used in this tutorial:</p>
@@ -486,7 +478,6 @@ OpenMM makes this easy to do:</p>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.LangevinMiddleIntegrator.html">LangevinMiddleIntegrator</a></p></li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.MonteCarloBarostat.html">MonteCarloBarostat</a></p></li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.pdbxfile.PDBxFile.html">PDBxFile</a></p></li>
-<li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.Platform.html">Platform</a></p></li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.simulation.Simulation.html">Simulation</a></p></li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.statedatareporter.StateDataReporter.html">StateDataReporter</a></p></li>
 </ul>
@@ -513,7 +504,7 @@ OpenMM makes this easy to do:</p>
           <a href="../../tutorials.html" title="Previous document">The OpenMM Tutorials</a>
         </li>
         <li>
-          <a href="protein_in_water.html" title="Next document">Protein in Water</a>
+          <a href="loading_and_reporting.html" title="Next document">Loading Input Files and Reporting Results</a>
           &rarr;
         </li>
     </ul>
@@ -561,11 +552,12 @@ OpenMM makes this easy to do:</p>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Getting Started with OpenMM</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#Introduction">Introduction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Installing-OpenMM-and-Running-OpenMM-Setup">Installing OpenMM and Running OpenMM Setup</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Running-the-Simulation">Running the Simulation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Running-a-Simulation">Running a Simulation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Summary">Summary</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Further-Reading">Further Reading</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="loading_and_reporting.html">Loading Input Files and Reporting Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#beyond-the-basics">Beyond the Basics</a></li>
