@@ -64,7 +64,7 @@ is required. However, it is also especially helpful for setting up simulations o
 <p>These approaches are not completely exclusive: for instance, it is possible to use OpenMM’s application layer to set up a simulation, and then use the library layer to make manual modifications before running it. However, understanding the basics of these methods is useful for understanding how to build more complex simulation workflows with OpenMM, so these introductory tutorials will walk through each of them in turn. This first tutorial covers the first method. In particular, we will see how
 to load a protein structure into OpenMM, clean up and prepare the structure for simulation, specify a force field, and run a simulation.</p>
 <p>The tutorials will not describe in extensive detail the use of external programs, such as Amber and CHARMM, for system setup. When they discuss how to use OpenMM to run simulations that have been set up using other tools, links to relevant documentation for these tools will be given. Furthermore, they will not describe in detail the basic theory behind molecular simulations, or discuss how to perform more advanced analysis of simulation results beyond extracting basic thermodynamic properties.
-For links to resources on related topics not covered directly in these tutorials, refer to the <a class="reference internal" href="#Further-Reading"><span class="std std-ref">Further Reading</span></a> section of this and other tutorial notebooks.</p>
+For links to resources on related topics not covered directly in these tutorials, refer to the <a class="reference internal" href="#Summary-and-Further-Reading"><span class="std std-ref">Summary and Further Reading</span></a> and <a class="reference internal" href="#Links"><span class="std std-ref">Links</span></a> sections of this and other tutorial notebooks.</p>
 </section>
 <section id="Installing-OpenMM-and-Running-OpenMM-Setup">
 <h2>Installing OpenMM and Running OpenMM Setup<a class="headerlink" href="#Installing-OpenMM-and-Running-OpenMM-Setup" title="Link to this heading">¶</a></h2>
@@ -84,19 +84,19 @@ inside more complex Python packages and programs.</p>
 </pre></div>
 </div>
 <p>in a shell, which opens its graphical user interface in a web browser.</p>
-<p><img alt="dfab3ceed7864632b3d19cc99ae7a65b" class="no-scaled-link" src="../../_images/getting_started_1.png" style="width: 800px;" /></p>
+<p><img alt="a22b85767d084e69928c01b75e606468" class="no-scaled-link" src="../../_images/getting_started_1.png" style="width: 800px;" /></p>
 <p>In this example, we will use a structure of hen egg white lysozyme from the Protein Data Bank with <a class="reference external" href="https://www.rcsb.org/structure/1AKI">PDB ID 1AKI</a>. The structure can be downloaded in PDBx/mmCIF format as <a class="reference external" href="https://files.rcsb.org/download/1AKI.cif">1AKI.cif</a> from the linked PDB entry. If you want to follow along in OpenMM Setup, you can select the default option to load a PDB or PDBx/mmCIF file.</p>
-<p><img alt="849718346b6b4e189dacebfcc307a186" class="no-scaled-link" src="../../_images/getting_started_2.png" style="width: 800px;" /></p>
+<p><img alt="ae73952124134b6fbe1098fd2bdb7a91" class="no-scaled-link" src="../../_images/getting_started_2.png" style="width: 800px;" /></p>
 <p>To actually perform any kind of simulation from a molecular structure, we need to specify a <em>force field</em> that defines parameters for bonded and non-bonded interactions between its atoms, thereby allowing OpenMM to compute energies and forces from atomic positions. OpenMM provides several commonly used force fields for biomolecular simulations; these are <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#force-fields">described in the user guide</a>. Choosing an
 appropriate force field for your research problem is outside of the scope of this tutorial, but you should be aware of the behavior of the force field you choose and any limitations it has that might be applicable to your system. The default force field that we will use here, which OpenMM refers to as <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/02_running_sims.html#amber19">“Amber19”</a>, includes Amber <a class="reference external" href="https://ambermd.org/AmberModels_proteins.php">ff19SB</a> force field parameters
 for proteins, among others. For this tutorial, we will use the default TIP3P-FB model for water; the water models distributed with the force fields built into OpenMM also contain compatible parameters for ions.</p>
 <p>Protein structures downloaded directly from the Protein Data Bank are often not immediately suitable for running simulations. They may be missing hydrogen atoms, and they may contain additional, <em>e.g.</em>, oxygen atoms at positions where water molecules are found in the crystal structures. OpenMM Setup comes with a builtin interface to the <a class="reference external" href="https://github.com/openmm/pdbfixer">PDBFixer</a> tool that can help clean up and prepare files for simulation. Selecting the option to do this leads to a
 visualization window where we can inspect the structure and choose actions to take:</p>
-<p><img alt="a08981ef82164f049f15eaa0b78e0a0d" class="no-scaled-link" src="../../_images/getting_started_3.png" style="width: 800px;" /></p>
+<p><img alt="8c739881f1f74a2e8afd7eaf8069cd9e" class="no-scaled-link" src="../../_images/getting_started_3.png" style="width: 800px;" /></p>
 <p>A PDB or PDBx/mmCIF file contains a hierarchical representation of a molecular structure, with atoms grouped into residues and residues grouped into chains. Chains can correspond to single polymeric molecules consisting of a sequence of residues, but more generally, a chain may just group related residues together. For the file we are using in this tutorial, the protein is present in chain A and all of the crystallographic water molecules are in chain B, so we can exclude the latter to remove
 the water molecules. Alternatively, you can use the “delete heterogens” dropdown to remove water as well as other non-standard species from the structure.</p>
 <p>After removing the water present in the crystal structure, we can instruct OpenMM Setup to add hydrogen atoms to the remaining protein, and add water back (along with <span class="math notranslate nohighlight">\(\ce{Na+}\)</span> and <span class="math notranslate nohighlight">\(\ce{Cl-}\)</span> ions) in the form of a solvent box surrounding it. Here we have kept the default options except for increasing the ionic strength to 0.1 M:</p>
-<p><img alt="2d317fe4086745299d4c054a3c951dca" class="no-scaled-link" src="../../_images/getting_started_4.png" style="width: 800px;" /></p>
+<p><img alt="a15559ebb1964dfdab4123a5a48a9a2c" class="no-scaled-link" src="../../_images/getting_started_4.png" style="width: 800px;" /></p>
 <p>At last, OpenMM Setup will generate a Python script along with a PDBx/mmCIF file containing our preprocessed and solvated protein structure. You can use OpenMM Setup to run OpenMM and monitor the simulation output directly from your web browser, but in this tutorial, we will take the script that OpenMM Setup generates and work through it line by line. For this tutorial, we will keep the default options from OpenMM Setup, except for:</p>
 <ul class="simple">
 <li><p>Decreasing the value of the “Simulation Length (steps)” field in the Simulation tab to 20000 (to keep the simulation short for the tutorial).</p></li>
@@ -445,8 +445,8 @@ OpenMM makes this easy to do:</p>
 <p>The potential energy and temperature approach their equilibrium values quickly, while the density takes slightly longer to stabilize. For a production simulation, more quantitative analysis could be done to understand whether or not the structure of the protein is changing over a longer period of time. The simulation is intentionally kept short for this tutorial, and structural analysis of simulation results is out of its scope.</p>
 </section>
 </section>
-<section id="Summary">
-<h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading">¶</a></h2>
+<section id="Summary-and-Further-Reading">
+<h2>Summary and Further Reading<a class="headerlink" href="#Summary-and-Further-Reading" title="Link to this heading">¶</a></h2>
 <p>After following this tutorial, you should now be able to:</p>
 <ul class="simple">
 <li><p>Perform basic structure preparation tasks, like adding hydrogen atoms and a solvent box, in OpenMM Setup.</p></li>
@@ -455,10 +455,12 @@ OpenMM makes this easy to do:</p>
 </ul>
 <p>We used OpenMM Setup to prepare our input structure as well as generate an input script. If you want to do this programmatically from within Python, rather than through the OpenMM Setup graphical user interface, you may be able to use OpenMM’s <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.modeller.Modeller.html">Modeller</a> class: see the <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/03_model_building_editing.html">user guide</a> for examples. In addition, the
 <a class="reference external" href="https://github.com/openmm/pdbfixer">PDBFixer</a> tool, used internally by OpenMM Setup, offers various options for fixing common problems in structures from the Protein Data Bank.</p>
+<p>If you are having issues getting OpenMM to run, there are a few resources that may be useful to consult. If you cannot even <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">openmm</span></code> from Python, make sure that you have followed the <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/01_getting_started.html#installing-openmm">installation instructions</a> carefully. If you can import OpenMM in Python, but are encountering problems running simulations, the OpenMM <a class="reference external" href="https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions">Frequently Asked
+Questions</a> discusses some common errors and how to resolve them. If the documentation does not address the problem you are having, feel free to ask for help on the OpenMM <a class="reference external" href="https://github.com/openmm/openmm/discussions">discussion board</a>.</p>
 <p>In the next tutorial, we will discuss various ways of getting data in and out of OpenMM. We will cover how to read input files in formats designed for other molecular dynamics engines like Amber, and how to get various kinds of data, including simulation trajectories, out of OpenMM while running a simulation.</p>
 </section>
-<section id="Further-Reading">
-<h2>Further Reading<a class="headerlink" href="#Further-Reading" title="Link to this heading">¶</a></h2>
+<section id="Links">
+<h2>Links<a class="headerlink" href="#Links" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Relevant sections of the <a class="reference external" href="https://docs.openmm.org/latest/api-python/">User Guide</a>:</p>
 <ul>
@@ -480,13 +482,6 @@ OpenMM makes this easy to do:</p>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.pdbxfile.PDBxFile.html">PDBxFile</a></p></li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.simulation.Simulation.html">Simulation</a></p></li>
 <li><p><a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.statedatareporter.StateDataReporter.html">StateDataReporter</a></p></li>
-</ul>
-</li>
-<li><p>Troubleshooting basics:</p>
-<ul>
-<li><p>If you cannot even <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">openmm</span></code> from Python, make sure that you have followed the <a class="reference external" href="https://docs.openmm.org/latest/userguide/application/01_getting_started.html#installing-openmm">installation instructions</a> carefully.</p></li>
-<li><p>If you can import OpenMM in Python, but are encountering problems running simulations, the OpenMM <a class="reference external" href="https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions">Frequently Asked Questions</a> discusses some common errors and how to resolve them.</p></li>
-<li><p>If the documentation does not address the problem you are having, feel free to ask for help on the OpenMM <a class="reference external" href="https://github.com/openmm/openmm/discussions">discussion board</a>.</p></li>
 </ul>
 </li>
 </ul>
@@ -553,11 +548,12 @@ OpenMM makes this easy to do:</p>
 <li class="toctree-l4"><a class="reference internal" href="#Introduction">Introduction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Installing-OpenMM-and-Running-OpenMM-Setup">Installing OpenMM and Running OpenMM Setup</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Running-a-Simulation">Running a Simulation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Summary">Summary</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Further-Reading">Further Reading</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Summary-and-Further-Reading">Summary and Further Reading</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Links">Links</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="loading_and_reporting.html">Loading Input Files and Reporting Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building_systems.html">Building Systems from Scratch</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#beyond-the-basics">Beyond the Basics</a></li>
