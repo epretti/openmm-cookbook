@@ -255,6 +255,7 @@ create a cubic box giving the specified initial number density <code class="docu
 </pre></div>
 </div>
 </div>
+<p>Note here that we use OpenMM’s built-in <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.vec3.Vec3.html">Vec3</a> class, which represents 3-dimensional vectors and can perform basic mathematical operations on them. However, OpenMM functions that accept Vec3 instances can also accept other sequences like lists, tuples, or NumPy arrays.</p>
 <p>We now add particles to the System one by one with <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.System.html#openmm.openmm.System.addParticle">System.addParticle()</a>. An OpenMM System has no direct concept of “particle types”. Instead, you can create the particles in any order you want, as long as you ensure that particle parameters set in Forces are ordered in the same way. Here, we will treat the first <code class="docutils literal notranslate"><span class="pre">N_A</span></code> particles in the System as type A, and the next <code class="docutils literal notranslate"><span class="pre">N_B</span></code>
 particles as type B.</p>
 <div class="nbinput nblast docutils container">
@@ -516,6 +517,181 @@ directly</a>:</p>
 <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.simulation.Simulation.html#openmm.app.simulation.Simulation.minimizeEnergy">Simulation.minimizeEnergy()</a>, we could use OpenMM’s <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.openmm.LocalEnergyMinimizer.html">LocalEnergyMinimizer</a>.</p>
 <p>With this method, it is unnecessary to create a Topology for our System. However, we lose the ability to use OpenMM’s builtin reporters, and also lose some convenience features such as <a class="reference external" href="https://docs.openmm.org/latest/api-python/generated/openmm.app.simulation.Simulation.html#openmm.app.simulation.Simulation.runForClockTime">Simulation.runForClockTime()</a>. Generally, using the Simulation class from the library layer is most convenient, but you could create and manage Context objects directly
 if, <em>e.g.</em>, you wanted to replace the OpenMM application layer’s output reporting system with a completely custom framework for saving simulation results.</p>
+</section>
+<section id="The-Completed-Script">
+<h3>The Completed Script<a class="headerlink" href="#The-Completed-Script" title="Link to this heading">¶</a></h3>
+<p>In case you want to experiment with modifying the Python commands in this tutorial as a standalone Python script rather than as Jupyter notebook cells, they are given all together as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">openmm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">openmm.app</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">openmm.unit</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Define dimensionless units.</span>
+
+<span class="n">length_scale</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+<span class="n">mass_scale</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dalton</span>
+<span class="n">energy_scale</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span>
+<span class="n">time_scale</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">picosecond</span>
+
+<span class="n">press_scale</span> <span class="o">=</span> <span class="n">energy_scale</span> <span class="o">/</span> <span class="p">(</span><span class="n">length_scale</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">AVOGADRO_CONSTANT_NA</span><span class="p">)</span>
+<span class="n">temp_scale</span> <span class="o">=</span> <span class="n">energy_scale</span> <span class="o">/</span> <span class="p">(</span><span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">BOLTZMANN_CONSTANT_kB</span> <span class="o">*</span> <span class="n">openmm</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">AVOGADRO_CONSTANT_NA</span><span class="p">)</span>
+
+<span class="c1"># Set simulation parameters.</span>
+
+<span class="n">N_A</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">N_B</span> <span class="o">=</span> <span class="mi">500</span>
+
+<span class="n">rho</span> <span class="o">=</span> <span class="mf">0.6</span> <span class="o">/</span> <span class="n">length_scale</span> <span class="o">**</span> <span class="mi">3</span>
+
+<span class="n">m_A</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">mass_scale</span>
+<span class="n">m_B</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">mass_scale</span>
+
+<span class="n">r_cut</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">length_scale</span>
+
+<span class="n">sigma_A</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">length_scale</span>
+<span class="n">sigma_B</span> <span class="o">=</span> <span class="mf">1.2</span> <span class="o">*</span> <span class="n">length_scale</span>
+
+<span class="n">epsilon_A</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">energy_scale</span>
+<span class="n">epsilon_B</span> <span class="o">=</span> <span class="mf">1.3</span> <span class="o">*</span> <span class="n">energy_scale</span>
+
+<span class="n">press</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">press_scale</span>
+<span class="n">temp</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">temp_scale</span>
+<span class="n">friction</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">time_scale</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mf">0.005</span> <span class="o">*</span> <span class="n">time_scale</span>
+
+<span class="c1"># Create the System.</span>
+
+<span class="n">system</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">System</span><span class="p">()</span>
+
+<span class="n">L_box</span> <span class="o">=</span> <span class="p">((</span><span class="n">N_A</span> <span class="o">+</span> <span class="n">N_B</span><span class="p">)</span> <span class="o">/</span> <span class="n">rho</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">system</span><span class="o">.</span><span class="n">setDefaultPeriodicBoxVectors</span><span class="p">(</span><span class="n">openmm</span><span class="o">.</span><span class="n">Vec3</span><span class="p">(</span><span class="n">L_box</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">openmm</span><span class="o">.</span><span class="n">Vec3</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">L_box</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">openmm</span><span class="o">.</span><span class="n">Vec3</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">L_box</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i_A</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_A</span><span class="p">):</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="n">m_A</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i_B</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_B</span><span class="p">):</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="n">m_B</span><span class="p">)</span>
+
+<span class="n">lj</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">NonbondedForce</span><span class="p">()</span>
+<span class="n">lj</span><span class="o">.</span><span class="n">setNonbondedMethod</span><span class="p">(</span><span class="n">openmm</span><span class="o">.</span><span class="n">NonbondedForce</span><span class="o">.</span><span class="n">CutoffPeriodic</span><span class="p">)</span>
+<span class="n">lj</span><span class="o">.</span><span class="n">setCutoffDistance</span><span class="p">(</span><span class="n">r_cut</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i_A</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_A</span><span class="p">):</span>
+    <span class="n">lj</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma_A</span><span class="p">,</span> <span class="n">epsilon_A</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i_B</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_B</span><span class="p">):</span>
+    <span class="n">lj</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma_B</span><span class="p">,</span> <span class="n">epsilon_B</span><span class="p">)</span>
+
+<span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">lj</span><span class="p">)</span>
+
+<span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">openmm</span><span class="o">.</span><span class="n">MonteCarloBarostat</span><span class="p">(</span><span class="n">press</span><span class="p">,</span> <span class="n">temp</span><span class="p">))</span>
+
+<span class="c1"># Create the Integrator.</span>
+
+<span class="n">integrator</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">friction</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+<span class="c1"># Create the Topology.</span>
+
+<span class="n">topology</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">Topology</span><span class="p">()</span>
+
+<span class="n">chain_A</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">addChain</span><span class="p">()</span>
+<span class="n">chain_B</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">addChain</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i_A</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_A</span><span class="p">):</span>
+    <span class="n">residue</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">addResidue</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">chain_A</span><span class="p">)</span>
+    <span class="n">topology</span><span class="o">.</span><span class="n">addAtom</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">residue</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i_B</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_B</span><span class="p">):</span>
+    <span class="n">residue</span> <span class="o">=</span> <span class="n">topology</span><span class="o">.</span><span class="n">addResidue</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">chain_B</span><span class="p">)</span>
+    <span class="n">topology</span><span class="o">.</span><span class="n">addAtom</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">residue</span><span class="p">)</span>
+
+<span class="c1"># Create the Simulation, and prepare initial positions and velocities.</span>
+
+<span class="n">simulation</span> <span class="o">=</span> <span class="n">openmm</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">Simulation</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">)</span>
+
+<span class="n">grid_a</span><span class="p">,</span> <span class="n">grid_b</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i_x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i_y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i_z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">grid_a</span><span class="p">,</span> <span class="n">grid_b</span><span class="p">)[(</span><span class="n">i_x</span> <span class="o">+</span> <span class="n">i_y</span> <span class="o">+</span> <span class="n">i_z</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">openmm</span><span class="o">.</span><span class="n">Vec3</span><span class="p">(</span><span class="n">i_x</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">i_y</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">i_z</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="n">L_box</span><span class="p">)</span>
+
+<span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">grid_a</span> <span class="o">+</span> <span class="n">grid_b</span><span class="p">)</span>
+<span class="n">simulation</span><span class="o">.</span><span class="n">minimizeEnergy</span><span class="p">()</span>
+<span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setVelocitiesToTemperature</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+
+<span class="c1"># Run dynamics steps for equilibration.</span>
+
+<span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
+
+<span class="c1"># Set up RDF reporting as an example.</span>
+
+<span class="c1"># Define the edges of the bins on which to evaluate the RDFs.</span>
+<span class="n">rdf_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mi">401</span><span class="p">)</span>
+
+<span class="c1"># Make arrays in which to accumulate the RDFs.</span>
+<span class="n">rdf_aa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">rdf_bins</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">rdf_bb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">rdf_bins</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">rdf_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">rdf_bins</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Track the number of accumulations we have done so far.</span>
+<span class="n">rdf_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_rdf</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">rdf_aa</span><span class="p">,</span> <span class="n">rdf_bb</span><span class="p">,</span> <span class="n">rdf_ab</span><span class="p">,</span> <span class="n">rdf_count</span>
+
+    <span class="c1"># Extract the positions and box vectors from a State.</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">getPositions</span><span class="p">(</span><span class="n">asNumpy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">/</span> <span class="n">length_scale</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">getPeriodicBoxVectors</span><span class="p">()</span> <span class="o">/</span> <span class="n">length_scale</span><span class="p">)</span>
+
+    <span class="c1"># Apply the minimum image convention.  WARNING: This implementation ONLY works for orthorhombic periodic boxes!</span>
+    <span class="c1"># MonteCarloBarostat will not deform the periodic box, and it starts as a cube, so it works for this case.</span>
+    <span class="n">dr_ij</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">positions</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">dr_ij</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">dr_ij</span> <span class="o">/</span> <span class="n">lengths</span><span class="p">)</span> <span class="o">*</span> <span class="n">lengths</span>
+    <span class="n">r_ij</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dr_ij</span> <span class="o">*</span> <span class="n">dr_ij</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Get the distances between A-A, B-B, and A-B pairs.</span>
+    <span class="n">r_aa</span> <span class="o">=</span> <span class="n">r_ij</span><span class="p">[:</span><span class="n">N_A</span><span class="p">,</span> <span class="p">:</span><span class="n">N_A</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">N_A</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">r_bb</span> <span class="o">=</span> <span class="n">r_ij</span><span class="p">[</span><span class="n">N_A</span><span class="p">:,</span> <span class="n">N_A</span><span class="p">:][</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">N_B</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">r_ab</span> <span class="o">=</span> <span class="n">r_ij</span><span class="p">[:</span><span class="n">N_A</span><span class="p">,</span> <span class="n">N_A</span><span class="p">:]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="c1"># Accumulate the RDFs.</span>
+    <span class="n">rdf_aa</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">r_aa</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">rdf_bins</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">r_aa</span> <span class="o">*</span> <span class="n">r_aa</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">r_aa</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">rdf_bb</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">r_bb</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">rdf_bins</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">r_bb</span> <span class="o">*</span> <span class="n">r_bb</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">r_bb</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">rdf_ab</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">r_ab</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">rdf_bins</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">r_ab</span> <span class="o">*</span> <span class="n">r_ab</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">r_ab</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">rdf_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="c1"># Run dynamics steps for production.</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">calculate_rdf</span><span class="p">(</span><span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">getState</span><span class="p">(</span><span class="n">positions</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+<span class="c1"># Average and normalize the RDFs.</span>
+
+<span class="n">rdf_scale</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">rdf_count</span> <span class="o">*</span> <span class="p">(</span><span class="n">rdf_bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">rdf_bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">rdf_aa</span> <span class="o">*=</span> <span class="n">rdf_scale</span>
+<span class="n">rdf_bb</span> <span class="o">*=</span> <span class="n">rdf_scale</span>
+<span class="n">rdf_ab</span> <span class="o">*=</span> <span class="n">rdf_scale</span>
+
+<span class="c1"># Plot the results.</span>
+
+<span class="n">figure</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">rdf_bins_center</span> <span class="o">=</span> <span class="p">(</span><span class="n">rdf_bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">rdf_bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mf">2.0</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rdf_bins_center</span><span class="p">,</span> <span class="n">rdf_aa</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$g_</span><span class="si">{AA}</span><span class="s2">$&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rdf_bins_center</span><span class="p">,</span> <span class="n">rdf_bb</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$g_</span><span class="si">{BB}</span><span class="s2">$&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rdf_bins_center</span><span class="p">,</span> <span class="n">rdf_ab</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$g_</span><span class="si">{AB}</span><span class="s2">$&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">rdf_bins</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rdf_bins</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;$r$&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$g(r)$&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
 </section>
 </section>
 <section id="Summary-and-Further-Reading">
