@@ -147,51 +147,51 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
--142752.48294482686
--172820.28068633866
--176471.37936524625
--178166.6946924682
--179037.2846061067
--179516.6121174896
--179768.42375566316
--130436.52345428718
--154076.80584573085
--159118.60559649995
--161465.28427739703
--162998.74098652613
--164016.5285950499
--164712.32852012358
--165341.27947448424
--165692.20747495248
--166087.43786426613
--166433.48629833662
--166668.1925308995
--166857.5068058027
--167087.8306002497
--167251.3263965967
--167398.4570651742
--167508.1263889155
--167578.73074700614
--167670.58180944165
--167778.187555236
--167849.73565721797
--167920.71506672187
--167986.05036086575
--168058.67770756315
--168113.022493253
--168173.58813661968
--168224.6042313513
--168288.67099098867
--168329.6101389368
--167397.50205411267
--167059.56583790362
+-142752.4825552493
+-172862.26311187874
+-176501.46570964885
+-178179.13367599132
+-179049.9644264909
+-179506.6193546543
+-179800.69157504942
+-130436.52343519594
+-154023.52659982818
+-158952.72505934906
+-161419.61736701665
+-162739.58465346228
+-163934.83291769357
+-164608.43672247278
+-165209.16482631114
+-165779.41899611335
+-166222.86898056808
+-166557.75662582717
+-166847.6388371195
+-167059.28418349958
+-167231.2423673718
+-167380.75026889934
+-167494.99602133362
+-167600.5632401485
+-167698.089931099
+-167785.02052105186
+-167863.89654532576
+-167912.910021916
+-167012.77496118922
+-166678.89355080872
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Matplotlib is building the font cache; this may take a moment.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/notebooks_cookbook_report_minimization_6_1.png" src="../../_images/notebooks_cookbook_report_minimization_6_1.png" />
+<img alt="../../_images/notebooks_cookbook_report_minimization_6_2.png" src="../../_images/notebooks_cookbook_report_minimization_6_2.png" />
 </div>
 </div>
 <p>You will notice that the energy does not change continuously and does not always decrease. This is because the L-BFGS algorithm used by the minimizer does not support constraints. The minimizer therefore replaces all constraints with harmonic restraints, then performs unconstrained minimization of a combined objective function that is the sum of the system’s potential energy and the restraint energy. Once minimization completes, it checks whether all constraints are satisfied to an acceptable
