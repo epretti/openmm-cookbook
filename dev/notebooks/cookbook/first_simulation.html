@@ -56,10 +56,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">stdout</span>
 
 <span class="c1"># Load in the PDB strucure</span>
-<span class="n">pdb</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="s1">&#39;villin.pdb&#39;</span><span class="p">)</span>
+<span class="n">pdb</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="s1">'villin.pdb'</span><span class="p">)</span>
 
 <span class="c1"># Specifiy the forcefield</span>
-<span class="n">forcefield</span> <span class="o">=</span> <span class="n">ForceField</span><span class="p">(</span><span class="s1">&#39;amber14-all.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;amber14/tip3pfb.xml&#39;</span><span class="p">)</span>
+<span class="n">forcefield</span> <span class="o">=</span> <span class="n">ForceField</span><span class="p">(</span><span class="s1">'amber14-all.xml'</span><span class="p">,</span> <span class="s1">'amber14/tip3pfb.xml'</span><span class="p">)</span>
 
 
 <span class="c1"># Combine the molecular topology and the forcefield</span>
@@ -77,18 +77,18 @@
 <span class="n">simulation</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
 
 <span class="c1"># Perform local energy minimization</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Minimizing energy...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Minimizing energy..."</span><span class="p">)</span>
 <span class="n">simulation</span><span class="o">.</span><span class="n">minimizeEnergy</span><span class="p">(</span><span class="n">maxIterations</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 
-<span class="c1"># Write the trajectory to a file called &quot;output.pdb&quot;</span>
-<span class="n">simulation</span><span class="o">.</span><span class="n">reporters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PDBReporter</span><span class="p">(</span><span class="s1">&#39;output.pdb&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+<span class="c1"># Write the trajectory to a file called "output.pdb"</span>
+<span class="n">simulation</span><span class="o">.</span><span class="n">reporters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PDBReporter</span><span class="p">(</span><span class="s1">'output.pdb'</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
 
 <span class="c1"># Report infomation to the screen as the simulation runs</span>
 <span class="n">simulation</span><span class="o">.</span><span class="n">reporters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StateDataReporter</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">potentialEnergy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 
 <span class="c1">#Run the simulation for 1000 timsteps</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running simulation...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Running simulation..."</span><span class="p">)</span>
 <span class="n">simulation</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -101,16 +101,16 @@
 Minimizing energy...
 Running simulation...
 #&#34;Step&#34;,&#34;Potential Energy (kJ/mole)&#34;,&#34;Temperature (K)&#34;
-100,-154111.3941498809,146.7039895672364
-200,-150448.43107146406,199.40067915973566
-300,-148178.962782257,236.00836342526338
-400,-146282.98553680227,253.46493966538486
-500,-145017.19638946743,271.419900209801
-600,-144084.41098298162,280.94766419115996
-700,-143681.76165269152,287.5904082219176
-800,-142764.58063777734,291.74523965379456
-900,-142257.40424085854,289.29639071035746
-1000,-142156.03540655316,291.4135812262332
+100,-154119.37836895772,146.78969388870186
+200,-150472.08837947677,197.88008593019904
+300,-147897.58312772287,233.69885908841408
+400,-146100.33349520317,255.37668439936945
+500,-144797.45544039508,267.07072898240267
+600,-144117.78620198788,274.0234247903979
+700,-143451.45350934245,283.47589453119144
+800,-143015.6425068531,287.3483427451133
+900,-142522.14062087197,289.0564013174507
+1000,-142490.13827774895,293.88180348654095
 </pre></div></div>
 </div>
 </section>
